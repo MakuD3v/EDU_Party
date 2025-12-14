@@ -3,17 +3,32 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Use environment variable for DB connection. 
-# For local dev, you can set this env var or use a .env file.
-# Default is set to a placeholder that will fail if not set in production.
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Robustly get env var, default to empty string, and strip whitespace/quotes.
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip().strip("'").strip('"')
 
 if not DATABASE_URL:
-    # Fallback for local testing if env var not set (OPTIONAL: Remove this for strict production safety)
-    # WARNING: Do not commit real passwords to version control
+    print("WARNING: DATABASE_URL environment variable is not set or empty.")
+    print("Using LOCAL fallback: postgresql+asyncpg://postgres:makugam3r@localhost:5432/EDU_Party_db")
     DATABASE_URL = "postgresql+asyncpg://postgres:makugam3r@localhost:5432/EDU_Party_db"
+else:
+    # Handle common prefixes to ensure asyncpg driver usage
+    if DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+        
+    # Debug: Print the URL (masking password) to verify structure in logs
+    try:
+        masked_url = DATABASE_URL.split("@")[-1] # Show host/db part
+        print(f"INFO: Connecting to database at ...@{masked_url}")
+    except Exception:
+        print("INFO: Connecting to database (URL could not be masked for logs)")
 
-
-engine = create_async_engine(DATABASE_URL, echo=True)
+try:
+    engine = create_async_engine(DATABASE_URL, echo=True)
+except Exception as e:
+    print(f"CRITICAL ERROR: Could not create database engine. URL was: {DATABASE_URL[:15]}...")
+    raise e
 
 AsyncSessionLocal = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
