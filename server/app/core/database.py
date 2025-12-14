@@ -4,7 +4,15 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Use environment variable for DB connection. 
 # Robustly get env var, default to empty string, and strip whitespace/quotes.
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip().strip("'").strip('"')
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+# Handle accidental copy-paste of 'psql ' command
+if DATABASE_URL.startswith("psql "):
+    print("WARNING: Detected 'psql' command in DATABASE_URL. Stripping it.")
+    DATABASE_URL = DATABASE_URL.replace("psql ", "", 1).strip()
+
+# Strip quotes again after potential psql removal
+DATABASE_URL = DATABASE_URL.strip("'").strip('"')
 
 if not DATABASE_URL:
     print("WARNING: DATABASE_URL environment variable is not set or empty.")
