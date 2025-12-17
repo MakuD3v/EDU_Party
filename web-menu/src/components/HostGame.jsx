@@ -12,21 +12,29 @@ const HostGame = () => {
     const API_URL = 'https://edu-party-server.onrender.com/api';
 
     const createLobby = async () => {
-        if (!lobbyName.trim()) {
-            alert('Please enter a lobby name');
-            return;
-        }
-
         const username = localStorage.getItem('username') || 'Player';
+        const finalLobbyName = lobbyName.trim() || 'Untitled Lobby';
+
         setLoading(true);
         try {
-            const res = await axios.post(`${API_URL}/lobbies/host?username=${username}&lobby_name=${encodeURIComponent(lobbyName)}`);
+            // Try with lobby_name parameter (new backend)
+            const res = await axios.post(`${API_URL}/lobbies/host?username=${username}&lobby_name=${encodeURIComponent(finalLobbyName)}`);
             setLobbyCode(res.data.lobby_id);
             localStorage.setItem('currentLobby', res.data.lobby_id);
             localStorage.setItem('isHost', 'true');
         } catch (err) {
-            console.error(err);
-            alert('Failed to create lobby');
+            console.error('First attempt failed:', err);
+            // Fallback: try without lobby_name (old backend)
+            try {
+                const res = await axios.post(`${API_URL}/lobbies/host?username=${username}`);
+                setLobbyCode(res.data.lobby_id);
+                localStorage.setItem('currentLobby', res.data.lobby_id);
+                localStorage.setItem('isHost', 'true');
+                console.log('Created lobby without custom name (backend not updated yet)');
+            } catch (fallbackErr) {
+                console.error('Both attempts failed:', fallbackErr);
+                alert('Failed to create lobby. Please try again or contact support.');
+            }
         } finally {
             setLoading(false);
         }
