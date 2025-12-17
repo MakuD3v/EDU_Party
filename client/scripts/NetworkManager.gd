@@ -14,7 +14,26 @@ var server_url := "ws://127.0.0.1:8000/ws/game/"
 var username := "Player_" + str(randi() % 1000)
 
 func _ready():
+	_parse_launch_args()
 	connect_to_server()
+
+func _parse_launch_args():
+	var args = OS.get_cmdline_args()
+	for arg in args:
+		if arg.begins_with("eduparty://"):
+			# Format: eduparty://launch?token=LOBBY_ID:USERNAME
+			# Simple parse: find 'token='
+			var token_start = arg.find("token=")
+			if token_start != -1:
+				var token = arg.substr(token_start + 6)
+				# Token format: LOBBY_ID:USERNAME
+				var parts = token.split(":")
+				if parts.size() >= 2:
+					var lobby_id = parts[0]
+					username = parts[1]
+					# Update server URL to include lobby
+					server_url = "ws://127.0.0.1:8000/ws/game/" + lobby_id + "/"
+					print("Parsed Launch Token: Lobby=" + lobby_id + ", User=" + username)
 
 func connect_to_server():
 	print("Connecting to: " + server_url + username)

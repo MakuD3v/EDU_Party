@@ -23,4 +23,11 @@ class ConnectionManager:
             except Exception as e:
                 print(f"Error sending to client: {e}")
 
+    async def send_to_user(self, username: str, message: dict):
+        if username in self.active_connections:
+            try:
+                await self.active_connections[username].send_json(message)
+            except Exception as e:
+                print(f"Error sending to user {username}: {e}")
+
 manager = ConnectionManager()

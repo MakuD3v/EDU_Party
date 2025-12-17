@@ -7,5 +7,7 @@ class Player(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    display_name = Column(String)
+    skin = Column(String, default="default")
     coins = Column(Integer, default=0)
     last_login = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
