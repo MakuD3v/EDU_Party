@@ -8,12 +8,11 @@ import './index.css';
 function App() {
   return (
     <Router>
-      <div className="bg-layer" style={{
-        backgroundImage: "url('/background_placeholder.png')", /* Fallback if we have one or just gradient */
-        background: "linear-gradient(to bottom, #2c3e50, #000000)" /* Temporary until image gen works or replaced */
+      <div className="bg-layer fixed inset-0 -z-10 bg-cover bg-center" style={{
+        background: "linear-gradient(to bottom, #2c3e50 0%, #050a10 100%)",
+        backgroundImage: "radial-gradient(circle at 50% 0%, #c49b66 0%, #4a2c2c 20%, #1a2a36 60%, #050a10 100%)"
       }}>
-        {/* We can add a fog animation div here later */}
-        <div className="fog-overlay"></div>
+        <div className="fog-overlay absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90 pointer-events-none"></div>
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, height: '100%' }}>

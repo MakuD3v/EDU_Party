@@ -7,34 +7,19 @@ const ProfileSelector = () => {
 
     useEffect(() => {
         // Fetch profile
-        // Placeholder for now
     }, []);
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ textAlign: 'right' }}>
-                <div style={{
-                    fontFamily: "var(--font-title)",
-                    fontSize: '1.2rem',
-                    color: 'var(--rk-text-white)'
-                }}>
+        <div className="flex items-center gap-4">
+            <div className="text-right">
+                <div className="font-title text-xl text-rk-text-white">
                     {profile.display_name}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--rk-text-dim)' }}>Level 1</div>
+                <div className="text-xs text-rk-text-dim">Level 1</div>
             </div>
-            <div style={{
-                width: '50px',
-                height: '50px',
-                border: '2px solid var(--rk-gold)',
-                borderRadius: '50%',
-                backgroundColor: '#111',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
-            }}>
+            <div className="w-12 h-12 border-2 border-rk-gold rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
                 {/* Icon placeholder */}
-                <span style={{ color: 'var(--rk-gold)', fontSize: '24px' }}>♟</span>
+                <span className="text-rk-gold text-2xl">♟</span>
             </div>
         </div>
     );

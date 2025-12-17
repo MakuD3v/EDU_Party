@@ -7,23 +7,6 @@ const MainMenu = () => {
     const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState(null);
 
-    const menuItems = [
-        { label: 'NEW GAME', action: () => navigate('/lobbies') }, // "Host Game" equivalent or Lobby List
-        { label: 'LOAD GAME', action: () => console.log('Load') },
-        { label: 'OPTIONS', action: () => navigate('/options') },
-        { label: 'CREDITS', action: () => console.log('Credits') },
-        { label: 'CHANGE PROFILE', action: () => navigate('/profile') }, // Explicit profile menu
-        { label: 'QUIT GAME', action: () => window.close() }, // Works if running in an app wrapper
-    ];
-
-    // User request items: PROFILE MENU, LOBBY LIST, HOST GAME, OPTIONS, QUIT.
-    // Mapping to visuals: 
-    // "NEW GAME" -> Host/Lobby? 
-    // Let's stick closer to the REQUEST list but style it like the IMAGE.
-    // Image has: NEW GAME, LOAD, OPTIONS, CREDITS, CHANGE PROFILE, QUIT GAME.
-    // Request: PROFILE MENU, LOBBY LIST, HOST GAME, OPTIONS, QUIT.
-
-    // I will use Request Items but style them.
     const refinedItems = [
         { label: 'HOST GAME', action: () => console.log('Host') },
         { label: 'LOBBY LIST', action: () => navigate('/lobbies') },
@@ -33,28 +16,35 @@ const MainMenu = () => {
     ];
 
     return (
-        <div className="main-menu-container" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end', // Right side
-            justifyContent: 'center',
-            height: '100%',
-            paddingRight: '10%',
-            boxSizing: 'border-box'
-        }}>
-            <div style={{ position: 'absolute', top: 30, right: 30 }}>
+        <div className="flex flex-col items-end justify-center h-full pr-[10%] box-border relative">
+            <div className="absolute top-8 right-8">
                 <ProfileSelector />
             </div>
 
-            <div className="menu-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="flex flex-col gap-3 w-80">
                 {refinedItems.map((item, index) => (
                     <button
                         key={index}
-                        className={`rk-btn ${activeItem === index ? 'active' : ''}`}
+                        className={`
+                text-left font-title text-xl py-2 px-5 transition-all duration-300 relative
+                ${activeItem === index
+                                ? 'text-rk-text-white text-shadow-glow bg-gradient-to-r from-rk-teal-bright/10 to-transparent border-l-4 border-rk-teal-bright pl-8 skew-x-[-10deg]'
+                                : 'text-rk-text-dim hover:text-rk-text-white hover:text-shadow-glow'
+                            }
+            `}
+                        style={{ transform: activeItem === index ? 'translate(10px, 0)' : 'none' }}
                         onMouseEnter={() => setActiveItem(index)}
                         onClick={item.action}
                     >
-                        {item.label}
+                        {/* Counter-skew texts so they remain upright if we skew the button container? 
+                Actually image shows text is normal. The highlight bar is slanted.
+                The skew on the button effectively slants the border. Text might skew too.
+                Let's use a pseudo-element for the precise shape if skew skews text.
+                For now, skewing the whole button is a simple approximation. 
+            */}
+                        <span className={activeItem === index ? 'skew-x-[10deg] inline-block' : ''}>
+                            {item.label}
+                        </span>
                     </button>
                 ))}
             </div>
