@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import BrawlButton from './BrawlButton';
 
 const LobbyBrowser = () => {
     const navigate = useNavigate();
@@ -22,75 +23,79 @@ const LobbyBrowser = () => {
 
     useEffect(() => {
         fetchLobbies();
+        const interval = setInterval(fetchLobbies, 3000);
+        return () => clearInterval(interval);
     }, []);
 
-    const joinLobby = (lobby) => {
-        const username = localStorage.getItem('username') || 'Guest';
-        const token = `${lobby.loaded_game}:${username}`;
-
-        // Show launch instructions or trigger protocol
-        // Since browsers might block protocols without interaction, we show a button or just do it.
-        window.location.href = `eduparty://launch?token=${token}`;
-    };
-
-    const hostGame = async () => {
-        const username = localStorage.getItem('username') || 'Guest';
-        try {
-            const res = await axios.post(`${API_URL}/lobbies/host?username=${username}`);
-            const lobbyId = res.data.lobby_id;
-            const token = `${lobbyId}:${username}`;
-            window.location.href = `eduparty://launch?token=${token}`;
-        } catch (err) {
-            console.error(err);
-        }
+    const joinLobby = (code) => {
+        localStorage.setItem('currentLobby', code);
+        localStorage.setItem('isHost', 'false');
+        navigate(`/lobby/${code}`);
     };
 
     return (
-        <div className="pt-24 px-12 h-screen flex flex-col items-center">
-            <div className="w-full max-w-4xl">
-                <button
-                    className="font-title text-rk-text-dim hover:text-rk-text-white mb-6 transition-colors"
-                    onClick={() => navigate('/')}
-                >
-                    &lt; BACK
-                </button>
-
-                <h1 className="font-title text-5xl text-rk-text-white mb-8">Lobby Browser</h1>
-
-                <div className="flex gap-4 mb-8">
+        <div className="relative h-screen w-screen overflow-y-auto p-12">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex justify-between items-center mb-8">
                     <button
-                        className="bg-rk-teal-muted/20 border border-rk-teal-bright text-rk-teal-bright font-title py-2 px-6 rounded hover:bg-rk-teal-bright hover:text-rk-bg-dark transition-all"
-                        onClick={hostGame}
+                        className="text-white hover:text-yellow-300 font-display text-xl"
+                        onClick={() => navigate('/')}
                     >
-                        HOST NEW GAME
+                        ← BACK
                     </button>
-                    <button
-                        className="text-rk-text-dim hover:text-rk-text-white font-title py-2 px-6"
-                        onClick={fetchLobbies}
-                    >
-                        REFRESH
-                    </button>
+                    <BrawlButton onClick={fetchLobbies}>REFRESH</BrawlButton>
                 </div>
 
-                <div className="bg-rk-bg-teal-deep/80 border border-rk-teal-muted rounded p-6 shadow-xl backdrop-blur-sm">
-                    {loading ? <p className="text-rk-text-dim">Loading...</p> : (
-                        lobbies.length === 0 ? <p className="text-rk-text-dim">No active lobbies found.</p> :
-                            lobbies.map((lobby, i) => (
-                                <div key={i} className="flex justify-between items-center py-4 border-b border-rk-teal-muted last:border-0 hover:bg-white/5 transition-colors px-4 -mx-4">
+                <h1 className="font-display font-bold text-white text-7xl mb-12 text-center drop-shadow-lg">
+                    PUBLIC LOBBIES
+                </h1>
+
+                {loading ? (
+                    <p className="text-white text-3xl text-center">Loading...</p>
+                ) : lobbies.length === 0 ? (
+                    <div className="text-center">
+                        <p className="text-white text-3xl mb-8">No lobbies available</p>
+                        <BrawlButton size="lg" onClick={() => navigate('/host')}>
+                            CREATE ONE
+                        </BrawlButton>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {lobbies.map((lobby, i) => (
+                            <div key={i} className="bg-white rounded-3xl p-6 shadow-cartoony-lg border-4 border-cartoony-dark">
+                                <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <div className="font-title text-rk-gold text-lg">{lobby.host_username}'s Game</div>
-                                        <div className="text-sm text-rk-text-dim">Players: {lobby.players.join(', ')}</div>
+                                        <p className="font-display font-bold text-2xl text-cartoony-dark">
+                                            {lobby.host_username}'s Game
+                                        </p>
+                                        <p className="text-gray-600">Players: {lobby.players.length}</p>
                                     </div>
-                                    <button
-                                        className="border border-rk-teal-bright text-rk-teal-bright font-title py-1 px-4 hover:bg-rk-teal-bright hover:text-rk-bg-dark transition-all"
-                                        onClick={() => joinLobby(lobby)}
-                                    >
-                                        JOIN
-                                    </button>
+                                    <div className="bg-cartoony-yellow rounded-lg py-1 px-3 border-2 border-yellow-600">
+                                        <p className="font-display font-bold text-lg">{lobby.loaded_game}</p>
+                                    </div>
                                 </div>
-                            ))
-                    )}
-                </div>
+
+                                <div className="mb-4">
+                                    {lobby.players.map((player, j) => (
+                                        <div key={j} className="flex items-center gap-2 mb-2">
+                                            <span className="text-xl">😀</span>
+                                            <span className="text-gray-700">{player}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <BrawlButton
+                                    variant="blue"
+                                    size="md"
+                                    className="w-full"
+                                    onClick={() => joinLobby(lobby.loaded_game)}
+                                >
+                                    JOIN
+                                </BrawlButton>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

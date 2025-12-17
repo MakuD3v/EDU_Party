@@ -41,6 +41,7 @@ class ActiveGameManager:
         """
         for lobby_id, lobby in self.lobbies.items():
             state_snapshot = {
+                "status": lobby.get("status", "WAITING"),
                 "players": {
                     username: p.to_dict() 
                     for username, p in lobby["players"].items()
@@ -52,12 +53,23 @@ class ActiveGameManager:
 
     def create_lobby(self, lobby_id: str, host_username: str):
         if lobby_id not in self.lobbies:
+            # lobby_id should already be 4-digit code passed from API
             self.lobbies[lobby_id] = {
                 "players": {},
                 "host": host_username,
+                "status": "WAITING",
                 "created_at": asyncio.get_event_loop().time()
             }
-            print(f"Lobby created: {lobby_id}")
+            print(f"Lobby created: {lobby_id} by {host_username}")
+
+    async def start_lobby(self, lobby_id: str):
+        if lobby_id in self.lobbies:
+            print(f"Starting lobby {lobby_id}")
+            self.lobbies[lobby_id]["status"] = "PLAYING"
+            # Broadcast distinct 'GAME_START' message or rely on status update
+            msg = {"type": "GAME_START", "lobby_id": lobby_id}
+            for username in self.lobbies[lobby_id]["players"]:
+                 await manager.send_to_user(username, msg)
 
     def add_player(self, username: str, lobby_id: str):
         """

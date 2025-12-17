@@ -26,6 +26,7 @@ class ProfileResponse(BaseModel):
 class LobbyInfo(BaseModel):
     host_username: str
     loaded_game: str
+    status: str
     players: List[str]
 
 # --- Endpoints ---
@@ -35,11 +36,12 @@ async def get_profile(username: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Player).filter(Player.username == username))
     player = result.scalars().first()
     if not player:
-        # Auto-create for simplicity if queried via menu first time? 
-        # Or return 404. Let's return 404 to be specific, or auto-create if we want seamlessness.
-        # Given the flow, the user might type a username in the menu.
-        # Let's return 404 and let the frontend decide to "Create" via POST.
-        raise HTTPException(status_code=404, detail="Player not found")
+        # Auto-create for simplicity if queried via menu
+        # This simplifies the flow for "Guest" users in the new Cartoony UI
+        player = Player(username=username, display_name=username, skin="default")
+        db.add(player)
+        await db.commit()
+        await db.refresh(player)
     return player
 
 @router.post("/profile", response_model=ProfileResponse)
@@ -66,24 +68,29 @@ async def update_create_profile(profile_data: ProfileUpdate, db: AsyncSession = 
 async def list_lobbies():
     lobbies_info = []
     for lobby_id, lobby_data in game_manager.lobbies.items():
-        lobbies_info.append(LobbyInfo(
-            host_username=lobby_data["host"],
-            loaded_game=lobby_id, # Using lobby_id as game name for now
-            players=list(lobby_data["players"].keys())
-        ))
+        if lobby_data["status"] == "WAITING":
+            lobbies_info.append(LobbyInfo(
+                host_username=lobby_data["host"],
+                loaded_game=lobby_id, # This is the Code
+                status=lobby_data["status"],
+                players=list(lobby_data["players"].keys())
+            ))
     return lobbies_info
 
 @router.post("/lobbies/host")
 async def host_game(username: str):
-    import uuid
-    lobby_id = str(uuid.uuid4())[:8]
+    import random, string
+    # Generate 4-digit code
+    lobby_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
     game_manager.create_lobby(lobby_id, username)
-    # The token needs to encode the lobby ID for the client to join.
-    # Hand-off format: "lobby_id:username" or similar if we change client.
-    # But Godot client connects to /ws/game/lobby_id/username
-    # So we return the launch arguments or token.
+    
     return {
         "status": "lobby_created", 
         "lobby_id": lobby_id,
         "connection_url": f"ws://localhost:8000/ws/game/{lobby_id}/{username}"
     }
+
+@router.post("/lobbies/start")
+async def start_game(lobby_id: str):
+    await game_manager.start_lobby(lobby_id)
+    return {"status": "started"}
