@@ -25,9 +25,11 @@ class ProfileResponse(BaseModel):
 
 class LobbyInfo(BaseModel):
     host_username: str
+    lobby_name: str
     loaded_game: str
     status: str
     players: List[str]
+    max_players: int = 8
 
 # --- Endpoints ---
 
@@ -71,22 +73,25 @@ async def list_lobbies():
         if lobby_data["status"] == "WAITING":
             lobbies_info.append(LobbyInfo(
                 host_username=lobby_data["host"],
+                lobby_name=lobby_data.get("lobby_name", "Untitled Lobby"),
                 loaded_game=lobby_id, # This is the Code
                 status=lobby_data["status"],
-                players=list(lobby_data["players"].keys())
+                players=list(lobby_data["players"].keys()),
+                max_players=8
             ))
     return lobbies_info
 
 @router.post("/lobbies/host")
-async def host_game(username: str):
+async def host_game(username: str, lobby_name: str = "Untitled Lobby"):
     import random, string
     # Generate 4-digit code
     lobby_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    game_manager.create_lobby(lobby_id, username)
+    game_manager.create_lobby(lobby_id, username, lobby_name)
     
     return {
         "status": "lobby_created", 
         "lobby_id": lobby_id,
+        "lobby_name": lobby_name,
         "connection_url": f"ws://localhost:8000/ws/game/{lobby_id}/{username}"
     }
 
